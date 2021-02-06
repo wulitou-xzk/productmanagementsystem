@@ -1,0 +1,28 @@
+[
+	{ id: "productMsg", text: "商品信息管理",iconCls: "icon-collapse"},
+	{ id: "addProduct", pid: "productMsg", text: "商品新增", iconCls: "icon-add", url: "../pages/productinfo/productinfoAdd.html" },
+	{ id: "listProduct", pid: "productMsg", text: "商品列表", iconCls: "icon-edit", url: "../pages/productinfo/productinfoList.html" },
+
+    { id: "userMsg", text: "员工信息管理",iconCls: "icon-collapse"},
+	{ id: "addUserinfo", pid: "userMsg", text: "员工新增", iconCls: "icon-add", url: "../pages/userinfo/userinfoAdd.html" },
+	{ id: "listUserinfo", pid: "userMsg", text: "员工列表", iconCls: "icon-edit", url: "../pages/userinfo/userinfoList.html" },
+
+    { id: "depotMsg", text: "补给记录管理",iconCls: "icon-collapse"},
+	{ id: "addDepotinfo", pid: "depotMsg", text: "新增补给记录", iconCls: "icon-add", url: "../pages/depotiteminfo/depotiteminfoAdd.html" },
+	{ id: "listDepotinfo", pid: "depotMsg", text: "补给记录列表", iconCls: "icon-edit", url: "../pages/depotiteminfo/depotiteminfoList.html" },
+
+    { id: "inventoryMsg", text: "清点记录管理",iconCls: "icon-collapse"},
+	{ id: "addInventoryinfo", pid: "inventoryMsg", text: "新增清点记录", iconCls: "icon-add", url: "../pages/inventoryinfo/inventoryinfoAdd.html" },
+	{ id: "listInventoryinfo", pid: "inventoryMsg", text: "清点列表", iconCls: "icon-edit", url: "../pages/inventoryinfo/inventoryinfoList.html" },
+
+	{ id: "notificationMsg", text: "通知信息管理", iconCls: "icon-collapse"},
+	{ id: "addNotificationinfo", pid: "notificationMsg", text: "发送通知", iconCls: "icon-add", url: "../pages/notificationinfo/notificationinfoAdd.html" },
+	{ id: "listNotificationinfo", pid: "notificationMsg", text: "通知列表", iconCls: "icon-edit", url: "../pages/notificationinfo/notificationinfoList.html" },
+	{ id: "myNotificationinfo", pid: "notificationMsg", text: "我的通知", iconCls: "icon-tip", url: "../pages/notificationinfo/mynotificationinfoList.html" },
+
+	{ id: "loginDetailMsg", text: "登录记录管理", iconCls: "icon-collapse"},
+	{ id: "listloginDetailinfo", pid: "loginDetailMsg", text: "记录列表", iconCls: "icon-edit", url: "../pages/loginDetailinfo/loginDetailList.html" },
+
+    {id: "personMsg", text: "个人信息管理/退出", iconCls: "icon-user"},
+    {id: "personMsgManage", pid: "personMsg", text: "个人信息", iconCls: "icon-edit", url: "../pages/personMsg/personMsg.html"}
+]

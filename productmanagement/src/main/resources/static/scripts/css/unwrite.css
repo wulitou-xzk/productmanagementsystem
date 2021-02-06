@@ -1,0 +1,21 @@
+.asLabel .mini-textbox-border,
+.asLabel .mini-textbox-input,
+.asLabel .mini-buttonedit-border,
+.asLabel .mini-buttonedit-input,
+.asLabel .mini-textboxlist-border
+{
+    border:0;background:none;cursor:default;
+}
+.asLabel .mini-buttonedit-button,
+.asLabel .mini-textboxlist-close
+{
+    display:none;
+}
+.asLabel .mini-textboxlist-item
+{
+    padding-right:8px;
+}
+.colorRed
+{
+	color: red;	
+}

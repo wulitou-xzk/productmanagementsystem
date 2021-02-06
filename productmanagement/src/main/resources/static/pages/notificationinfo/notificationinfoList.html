@@ -1,0 +1,209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>通知信息界面</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<script src="../../scripts/ColumnsMenu.js" type="text/javascript"></script>
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <h1>通知信息</h1>
+
+    <div style="width:100%;">
+        <div class="mini-toolbar" style="border-bottom:0;padding:0px;">
+            <table style="width:100%;">
+                <tr>
+                    <td style="width:100%;">
+                        <a class="mini-button" iconCls="icon-remove" onclick="remove()">删除</a>
+                        <a class="mini-button" iconCls="icon-add" onclick="add()">发送通知</a>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <input id="operation" name="operation" class="mini-textbox" emptyText="请输入通知内容" style="width: 150px;" onenter="onKeyEnter" />
+                        <input id="sendUid" name="sendUid" class="mini-combobox" valueField="uid" textField="uid"
+                               url="/user/selectUserIdName" required="true" onvaluechanged="onKeyEnter" emptyText="请选择发送者" />
+                        <input id="acceptUid" name="acceptUid" class="mini-combobox" valueField="uid" textField="uid"
+                               url="/user/selectUserIdName" required="true" onvaluechanged="onKeyEnter" emptyText="请选择接收者" />
+                        <a class="mini-button" iconCls="icon-search" onclick="search()">查询</a>
+                        <a class="mini-button" iconCls="icon-reload" onclick="clear()">清空</a>
+                    </td>
+                </tr>
+            </table>           
+        </div>
+    </div>
+    
+    <div id="datagrid1" class="mini-datagrid" style="width:100%;height:400px;" 
+        url="/notification/selectNotificationByPage" idField="id" showpager="true"
+        sizeList="[5,10,20,30,50]" pageSize="5" 
+        allowCellSelect="true" multiSelect="true" allowResize="true"
+        editNextOnEnterKey="true" editNextRowCell="true"
+        rederer="onPageRederer"
+    >
+        <div property="columns">
+        	<div type="indexcolumn" width="40">序号</div>
+            <div type="checkcolumn"></div>
+            <div field="notifId" width="120" allowSort="true">通知编号</div>
+            <div field="sendUid" width="120">发送者编号</div>
+            <div field="acceptUid" width="120">接收者编号</div>
+            <div field="pdId" width="100">产品编号</div>
+            <div field="pdName" width="100">产品名称</div>
+            <div field="operation" width="100">通知内容</div>
+            <div field="notifiDate" renderer="onDateRenderer" width="100" allowSort="true" dateFormat="yyyy-MM-dd">通知时间</div>
+            <div field="state" width="100" renderer="onStateRenderer">通知状态</div>
+            <div field="finishDate" renderer="onDateRenderer" width="100" allowSort="true" dateFormat="yyyy-MM-dd">完成时间</div>
+            <div name="action" width="120" headerAlign="center" align="center" renderer="onActionRenderer" cellStyle="padding:0;">操作</div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        mini.parse();
+
+        var grid = mini.get("datagrid1");
+        grid.load();
+
+        getCookie();
+        isLogin();
+        
+        var menu = new ColumnsMenu(grid);
+        
+        function onActionRenderer(e) {
+            var checkId = e.row.checkId;
+            var state = e.row.state;
+            var s = '  <a id="del" class="mini-button mini-state-default mini-corner-all" onclick="remove()">删除</a>'
+                + '  <a id="detail" class="mini-button mini-state-default mini-corner-all" onclick="detail(0)">详情</a>';
+            if(state === 0){
+                s += ' <a id="edit" class="mini-button mini-state-default mini-corner-all" onclick="detail(1)">编辑</a>';
+            }
+            return s;
+        }
+
+        // 删除一条通知
+        function remove() {
+            var rows = grid.getSelecteds();
+            if (rows.length > 0) {
+                mini.confirm("确认删除选中的记录？","删除商品",function(action) {
+                    if(action === "ok"){
+                        var ids = [];
+                        for (var i = 0, l = rows.length; i < l; i++) {
+                            var r = rows[i];
+                            ids.push(r.notifId);
+                        }
+                        var id = ids.join(',');
+                        grid.loading("操作中，请稍后......");
+                        $.ajax({
+                            url: "/notification/deleteNotificationById?id=" +id,
+                            success: function (text) {
+                                mini.alert(text,"提示");
+                                grid.reload();
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                mini.alert(jqXHR.responseText,"提示");
+                            }
+                        });
+                    }
+                });
+            } else {
+                mini.alert("请选中一条记录");
+            }
+        }
+        
+        // 弹出添加的子窗口
+        function add(){
+            mini.open({
+                url: "notificationinfo/notificationinfoAdd.html",
+                title: "发送通知", width: 600, height: 400,
+                iconCls: "icon-add",
+                allowResize: true,
+                onload: function () {
+                    var iframe = this.getIFrameEl();
+                },
+                ondestroy: function (action) {
+                    grid.reload();
+                }
+            });
+        }
+        
+        function detail(type) {
+            var row = grid.getSelected();
+            if (row) {
+                var url = '';
+                var title = '';
+                var action = '';
+                if(type === 1){
+                    url = 'notificationinfo/notificationinfoEdit.html';
+                    title = '通知编辑';
+                    action = 'edit';
+                }
+                if(type === 0){
+                    url = 'notificationinfo/notificationinfoDetail.html';
+                    title = '通知详情';
+                    action = 'detail';
+                }
+                mini.open({
+                    url: url,
+                    title: title, width: 600, height: 300,
+                    iconCls: "icon-edit",
+                    onload: function () {
+                        var iframe = this.getIFrameEl();
+                        var data = { action: action, notifId: row.notifId };
+                        iframe.contentWindow.SetData(data);
+                    },
+                    ondestroy: function (action) {
+                        grid.reload();
+                    }
+                });
+                
+            } else {
+                mini.alert("请选中一条记录");
+            }
+        }
+        
+        function onStateRenderer(e){
+        	if(e.value === 1){
+        		return "完成";
+        	}else{
+        		e.cellStyle="color:red;font-weight:bold;";
+        		return "未完成";
+        	}
+        }
+
+        function onDateRenderer(e) {
+            var date = e.value;
+            var acceptUid = e.row.acceptUid;
+            var s = '';
+            if(date != null && date != ''){
+                return dateFormat(date, 0);
+            }
+            if(acceptUid === loginUid){
+                var notifId = e.row.notifId;
+                s = ' <a id="finish" class="mini-button mini-state-default mini-corner-all" href="/notification/updateFinishDate' +
+                    '?notifId=' + notifId + '">点击完成</a>';
+            }
+            return s;
+        }
+
+        // 根据查询条件查询通知
+        function search() {
+            var operation = mini.get("operation").getValue();
+            var sendUid = mini.get("sendUid").getValue();
+            var acceptUid = mini.get("acceptUid").getValue();
+            grid.load({
+                operation:operation,
+                sendUid:sendUid,
+                acceptUid:acceptUid
+            });
+        }
+        function onKeyEnter(e) {
+            search();
+        }
+        // 清空查询条件并刷新页面
+        function clear(){
+            mini.get("operation").setValue("");
+            mini.get("sendUid").setValue("");
+            mini.get("acceptUid").setValue("");
+            search();
+        }
+    </script>
+</body>
+</html>

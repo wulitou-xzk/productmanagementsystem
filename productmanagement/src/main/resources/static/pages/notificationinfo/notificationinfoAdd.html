@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增商品</title>
+<head>
+    <title>新增面板</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+    
+    <style type="text/css">
+    html, body
+    {        
+        padding:0;
+        margin:0;
+        border:0;
+        height:100%;
+        overflow:hidden;
+    }
+    </style>
+</head>
+<body>    
+    <fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >发送通知</legend>
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+            	<tr>
+                    <td style="width:100px;" align="right">通知编号：</td>
+                    <td style="width:150px;">
+                        <input id="notifId" name="notifId" required="true" class="mini-textbox" enabled="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <input id="sendUid" name="sendUid" class="mini-hidden"/>
+                	<td style="width:100px;" align="right">接收员工：</td>
+                	<td>
+                        <input id="acceptUid" name="acceptUid" class="mini-combobox" valueField="uid" textField="uid"
+                               url="/user/selectUserIdName" required="true" emptyText="请选择员工" />
+                    </td>
+                	<td style="width:100px;" align="right">相关商品：</td>
+                	<td>
+                        <input id="pdId" name="pdId" class="mini-combobox" valueField="pdId" textField="pdId"
+                               url="/product/selectPdIdPdName" emptyText="请选择商品" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">通知时间：</td>
+                    <td >    
+                         <input id="notifiDate" name="notifiDate" class="mini-datepicker" style="width:150px;" showTodayButton="true"
+                                ondrawdate="onDrawDate" required="true" format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">通知内容：</td>
+                    <td colspan="3">
+                        <input id="operation" name="operation" class="mini-textbox" style="width:386px;"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="text-align:center;padding:10px;">               
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>       
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>       
+        </div>        
+    </form>
+    </fieldset>
+    
+    <script type="text/javascript">
+        mini.parse();
+        
+        var form = new mini.Form("form1");
+        getCookie();
+        isLogin();
+        setInitTimeId();
+        
+        // 设置今天之后的日期为不可选
+        function onDrawDate(e) {
+            var date = e.date;
+            var d = new Date();
+            if (date.getTime() < d.getTime()) {
+                e.allowSelect = false;
+            }
+        }
+        
+        // 将添加时间设为当前时间、从后台获取最新的checkId
+        function setInitTimeId(){
+        	 var t = mini.get("notifiDate");
+        	 t.setValue(mini.formatDate(new Date(),'yyyy-MM-dd'));
+        	 $.ajax({
+  	       	 	url: '/notification/selectNewNotifId',
+  	       	 	async:false,
+                success: function (text) {
+                    var o = mini.decode(text);
+                    mini.get("notifId").setValue(o.notifId);
+                }
+	   	     });
+        }
+        
+        function SaveData() {
+            var o = form.getData();   
+            
+            form.validate();
+            if (form.isValid() == false) return;
+            o.sendUid = loginUid;
+            var json = mini.encode([o]);
+            $.ajax({
+                url: "/notification/insertNotification",
+		        type: 'post',
+                data: { notificationJSON: json},
+                cache: false,
+                success: function (text) {
+                	mini.alert(text,"提示",function(){
+	                    CloseWindow("save");
+                	});
+               		clear();
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                	mini.alert(jqXHR.responseText,"提示",function(){
+	                    CloseWindow();
+                	});
+                }
+            });
+        }
+        
+        function GetData() {
+            var o = form.getData();
+            return o;
+        }
+        function CloseWindow(action) {            
+            if (action == "close" && form.isChanged()) {
+                if (confirm("数据被修改了，是否先保存？")) {
+                    return false;
+                }
+            }
+            if (window.CloseOwnerWindow) return window.CloseOwnerWindow(action);
+            else window.close();            
+        }
+        // 点击确认后保存数据并刷新页面
+        function onOk(e) {
+            SaveData();
+        }
+     	// 点击取消后刷新页面
+        function onCancel(e) {
+        	clear();
+            CloseWindow("cancel");
+        }
+        
+        function clear(){
+        	mini.get("notifId").setValue("");
+        	mini.get("pdId").setValue("");
+        	mini.get("acceptUid").setValue("");
+        	mini.get("operation").setValue("");
+        	setInitTimeId();
+        }
+
+    </script>
+</body>
+</html>

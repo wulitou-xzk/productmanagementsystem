@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>清点商品页面</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<script src="../../scripts/ColumnsMenu.js" type="text/javascript"></script>
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+</head>
+<body>
+
+    <h1>商品清点信息</h1>
+
+    <div style="width:100%;">
+        <div class="mini-toolbar" style="border-bottom:0;padding:0px;">
+            <table style="width:100%;">
+                <tr>
+                    <td style="width:100%;">
+                        <a class="mini-button" iconCls="icon-remove" onclick="remove()">删除</a>
+                        <a class="mini-button" iconCls="icon-add" onclick="add()">新增清点记录</a>
+                        <a href="/turnOver/selectTurnOverBySheet" class="mini-button" iconCls="icon-download">导出清点记录</a>
+                    </td>
+                    <td style="white-space: nowrap;">盈利：</td>
+                    <td>
+                        <input id="saleMoney" style="width: 100px;" class="mini-textbox" enabled="false"/>
+                    </td>
+                    <td style="white-space: nowrap;">
+                        <input id="uId" name="uId" class="mini-combobox" valueField="uid" textField="uid"
+                           url="/user/selectUserIdName?type=1" required="true" onvaluechanged="onKeyEnter" emptyText="请选择清点员" />
+                        <input id="pdId" name="pdId" class="mini-combobox" valueField="pdId" textField="pdId"
+                           url="/product/selectPdIdPdName" required="true" onvaluechanged="onKeyEnter" emptyText="请选择商品编号" />
+                    <input id="saleDate" name="saleDate" class="mini-textbox" style="width:150px;" onenter="onKeyEnter" emptyText="请输入日期(xxxx-xx-xx)"/>
+                    <a class="mini-button" iconCls="icon-search" onclick="search()">查询</a>
+                    <a class="mini-button" iconCls="icon-reload" onclick="clear()">清空</a>
+                </td>
+                </tr>
+            </table>           
+        </div>
+    </div>
+    
+    <div id="datagrid1" class="mini-datagrid" style="width:100%;height:400px;" 
+        url="/turnOver/selTurnOverByPage" idField="id" showpager="true"
+        sizeList="[5,10,20,30,50]" pageSize="5" 
+        allowCellSelect="true" multiSelect="true" allowResize="true"
+        editNextOnEnterKey="true" editNextRowCell="true"
+        rederer="onPageRederer"
+    >
+        <div property="columns">
+        	<div type="indexcolumn" width="40">序号</div>
+            <div type="checkcolumn"></div>
+            <div field="turnId" width="120" allowSort="true">清点编号</div>
+            <div field="uId" width="120" >清点员编号</div>
+            <div field="userName" width="120" >清点员姓名</div>
+            <div field="pdId" width="120" allowSort="true">商品编号</div>
+            <div field="pdName" width="60">商品名称</div>
+            <div field="saleDate" renderer="onDateRenderer" width="100" allowSort="true" dateFormat="yyyy-MM-dd">清点日期</div>
+            <div field="saleRemain" width="80" allowSort="true" >清点数量</div>
+            <div field="saleMoney" width="100" allowSort="true" >金额（元）</div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        mini.parse();
+
+        getSaleMoney();
+        var grid = mini.get("datagrid1");
+        getCookie();
+        isLogin();
+
+        grid.load();
+
+        var menu = new ColumnsMenu(grid);
+
+        function getSaleMoney(){
+            var pdId = mini.get("pdId").getValue();
+            var saleDate = mini.get("saleDate").getValue();
+            var uId = mini.get("uId").getValue();
+            $.ajax({
+                url: '/turnOver/selSaleMoney',
+                data: {'pdId':pdId, 'uId':uId, 'saleDate':saleDate},
+                async:false,
+                success: function (data) {
+                    mini.get("saleMoney").setValue("￥" + data);
+                }
+            });
+        }
+        
+        // 弹出添加的子窗口
+        function add(){
+            mini.open({
+                url: "inventoryinfo/inventoryinfoAdd.html",
+                title: "新增清点记录", width: 800, height: 400,
+                iconCls: "icon-add",
+                allowResize: true,
+                onload: function () {
+                    var iframe = this.getIFrameEl();
+                },
+                ondestroy: function (action) {
+                    grid.reload();
+                }
+            });
+        }
+
+        // 删除记录
+        function remove() {
+            var rows = grid.getSelecteds();
+            if (rows.length > 0) {
+                mini.confirm("确认删除选中的记录？","删除商品",function(action) {
+                    if(action === "ok"){
+                        var ids = [];
+                        for (var i = 0, l = rows.length; i < l; i++) {
+                            var r = rows[i];
+                            ids.push(r.turnId);
+                        }
+                        var id = ids.join(',');
+                        grid.loading("操作中，请稍后......");
+                        $.ajax({
+                            url: "/turnOver/delTurnOverById?id=" +id,
+                            success: function (text) {
+                                mini.alert(text,"提示");
+                                grid.reload();
+                            },
+                            error: function (jqXHR, textStatus, errorThrown) {
+                                mini.alert(jqXHR.responseText,"提示");
+                            }
+                        });
+                    }
+                });
+            } else {
+                mini.alert("请选中一条记录");
+            }
+        }
+
+        // 根据查询条件查询商品
+        function search() {
+            var pdId = mini.get("pdId").getValue();
+            var saleDate = mini.get("saleDate").getValue();
+            var uId = mini.get("uId").getValue();
+            getSaleMoney();
+            // var date = mini.formatDate(saleDate,'yyyy-MM-dd');
+            grid.load({
+                pdId:pdId,
+                saleDate:saleDate,
+                uId:uId
+            });
+        }
+        function onKeyEnter(e) {
+            search();
+        }
+        // 清空查询条件并刷新页面
+        function clear(){
+            mini.get("pdId").setValue("");
+            mini.get("saleDate").setValue("");
+            mini.get("saleMoney").setValue("0");
+            mini.get("uId").setValue("");
+            getSaleMoney();
+            search();
+        }
+
+        // 去除日期的年月日
+        function onDateRenderer(e){
+            var date = e.value; // string类型
+            if(date != null){
+                return dateFormat(date, 0);
+            }
+            return "";
+        }
+    </script>
+</body>
+</html>

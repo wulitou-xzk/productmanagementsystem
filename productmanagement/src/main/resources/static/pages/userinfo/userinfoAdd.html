@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>新增员工</title>
+<head>
+    <title>新增员工</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+    
+    <style type="text/css">
+    html, body
+    {        
+        padding:0;
+        margin:0;
+        border:0;
+        height:100%;
+        overflow:hidden;
+    }
+    </style>
+</head>
+<body>
+
+    <fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend>添加多位员工</legend>
+        <form action="/user/insertUserBySheet" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" style="width: 180px"/>
+            <button type="submit">导入文件</button>
+         </form>
+        <br>
+        <a href="/user/getFileDemo" class="mini-button" iconCls="icon-download">员工文件模板下载</a>
+    </fieldset>
+	
+    <fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >添加员工</legend> 
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+                <tr>
+                    <td style="width:80px;" align="right">职位：</td>
+                    <td style="width:150px;">
+                        <input id="userLevel" name="userLevel" class="mini-combobox" valueField="id" textField="text"
+                               url="/data/userLevel.txt" required="true" onvaluechanged="setNewUid" emptyText="请选择员工类别" />
+                    </td>
+                    <td style="width:80px;" align="right">员工编号：</td>
+                    <td style="width:150px;">    
+                        <input id="uId" name="uId" class="mini-textbox" required="true" enabled="false"/>
+                    </td>
+                </tr>
+               	<tr>
+                    <td style="width:80px;" align="right">员工姓名：</td>
+                    <td >
+                        <input id="userName" name="userName" class="mini-textbox" required="true" emptyText="请输入员工姓名"/>
+                    </td>
+                    <td align="right">入职日期：</td>
+                    <td >
+                        <input id="addDate" name="addDate" class="mini-datepicker" style="width:150px;" showTodayButton="true"
+                               onfocus="this.blur()" format="yyyy-MM-dd" required="true"  showOkButton="true" showClearButton="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">员工电话：</td>
+                    <td >
+                        <input id="phone" name="phone" class="mini-textbox" onvalidation="checkPhone"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">备注信息：</td>
+                    <td colspan="3">
+                        <input id="remark" name="remark" class="mini-textarea" style="width:386px;"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="text-align:center;padding:10px;">               
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>       
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>       
+        </div>        
+    </form>
+    </fieldset>
+
+    <script type="text/javascript">
+        mini.parse();
+        
+        var form = new mini.Form("form1");
+
+        getCookie();
+        isLogin();
+		setInitTime();
+
+        // 将添加时间设为当前时间、从后台获取最新的uId
+        function setInitTime(){
+        	 var t = mini.get("addDate");
+        	 t.setValue(new Date());
+        }
+
+        function setNewUid(e) {
+            var userLevel = e.value;
+            $.ajax({
+                url: '/user/selNewUid?userLevel=' + userLevel,
+                async:false,
+                success: function (text) {
+                    var o = mini.decode(text);
+                    mini.get("uId").setValue(o.uId);
+                }
+            });
+        }
+
+        function checkPhone(e) {
+            var w_sj = e.value;
+            var reg = /^1[34578]\d{9}$/;
+            if(reg.test(w_sj) === false){
+                mini.alert("联系手机输入不合法，请重新输入");
+                e.isValid = false;
+            }
+            e.isValid = true;
+        }
+
+        function SaveData() {
+            var o = form.getData();   
+            
+            form.validate();
+            if (form.isValid() == false) {
+            	return;
+            }
+            var json = mini.encode([o]);
+            $.ajax({
+                url: "/user/insertUser",
+		        type: 'post',
+                data: { userJSON: json },
+                cache: false,
+                success: function (text) {
+                	mini.alert(text,"提示",function(){
+                		clear();
+	                    CloseWindow("save");
+                	});
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                	mini.alert(jqXHR.responseText,"提示",function(){
+	                    CloseWindow();
+                	});
+                }
+            });
+        }
+
+        function GetData() {
+            var o = form.getData();
+            return o;
+        }
+        function CloseWindow(action) {            
+            if (action == "close" && form.isChanged()) {
+            	mini.confirm("数据被修改了，是否先保存？","提示",function(action){
+                	if(action === "ok"){
+	                    return false;
+                	}
+                });
+            }
+            if (window.CloseOwnerWindow) {
+            	return window.CloseOwnerWindow(action);
+            }
+            else {
+            	window.close();            
+            }
+        }
+        // 点击确定后清空页面数据
+        function onOk(e) {
+            SaveData();
+            clear();
+        }
+     	// 点击取消后清空页面数据
+        function onCancel(e) {
+        	clear();
+            CloseWindow("cancel");
+        }
+        
+        function clear(){
+        	mini.get("userName").setValue("");
+        	mini.get("userLevel").setValue("");
+        	mini.get("remark").setValue("");
+        	mini.get("uId").setValue("");
+        	mini.get("phone").setValue("");
+        	setInitTime();
+        }
+
+    </script>
+</body>
+</html>

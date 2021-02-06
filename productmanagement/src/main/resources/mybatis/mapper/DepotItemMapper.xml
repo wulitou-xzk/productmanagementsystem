@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.DepotItemMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.DepotItem">
+        <id column="itemid" property="itemId" jdbcType="VARCHAR"/>
+        <result column="depotid" property="depotId" jdbcType="VARCHAR"/>
+        <result column="pdid" property="pdId" jdbcType="VARCHAR"/>
+        <result column="depotdate" property="depotDate" jdbcType="DATE"/>
+        <result column="adddate" property="addDate" jdbcType="DATE"/>
+        <result column="depotremain" property="depotRemain" jdbcType="INTEGER"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        itemid, depotid, pdid, depotdate, addDate, depotremain
+    </sql>
+
+    <insert id="insertDepotItem" parameterType="com.productmanage.bean.DepotItem">
+        insert into depotitem
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">
+                itemid,
+            </if>
+            <if test="depotId != null">
+                depotid,
+            </if>
+            <if test="pdId != null">
+                pdid,
+            </if>
+            <if test="depotDate != null">
+                depotdate,
+            </if>
+            <if test="addDate != null">
+                adddate,
+            </if>
+            <if test="depotRemain != null">
+                depotremain,
+            </if>
+        </trim>
+        <trim prefix="values(" suffix=")" suffixOverrides=",">
+            <if test="itemId != null">
+                #{itemId,jdbcType=VARCHAR},
+            </if>
+            <if test="depotId != null">
+                #{depotId,jdbcType=VARCHAR},
+            </if>
+            <if test="pdId != null">
+                #{pdId,jdbcType=VARCHAR},
+            </if>
+            <if test="depotDate != null">
+                #{depotDate,jdbcType=DATE},
+            </if>
+            <if test="addDate != null">
+                #{addDate,jdbcType=DATE},
+            </if>
+            <if test="depotRemain != null">
+                #{depotRemain,jdbcType=INTEGER},
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteDepotItemById" parameterType="java.lang.String">
+        delete from depotitem
+        where itemid = #{itemId,jdbcType=VARCHAR} and depotdate is not null
+    </delete>
+
+    <delete id="deleteDepotItemByPdId" parameterType="java.lang.String">
+        delete from depotitem
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteDepotIdByDepotId" parameterType="java.lang.String">
+        delete from depotitem
+        where depotid = #{depotId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateDepotItem" parameterType="com.productmanage.bean.DepotItem">
+        update depotitem
+        <set>
+            <if test="depotRemain != null" >
+                depotremain = #{depotRemain,jdbcType=INTEGER},
+            </if>
+            <if test="depotDate != null">
+                depotdate = #{depotDate,jdbcType=DATE}
+            </if>
+        </set>
+        where itemid = #{itemId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectNewItemId" resultType="java.lang.String">
+        select concat(
+            'item',
+            date_format(now(),'%Y%m%d%H%i%s')
+        )
+    </select>
+
+    <select id="selectDepotItemById" resultType="com.productmanage.bean.DepotItem">
+        select
+        <include refid="Base_Column_List"/>
+        from depotitem
+        where itemid = #{itemId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectDepotItemByPage" resultType="com.productmanage.bean.DepotItem">
+        select
+        <include refid="Base_Column_List"/>
+        from depotitem
+        <where>
+            <if test="pdId != null and pdId != ''">
+                and pdid = #{pdId,jdbcType=VARCHAR}
+            </if>
+            <if test="depotId != null">
+                and depotid like concat('%',#{depotId,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="date != null and date != ''">
+                and (adddate like concat('%',#{date,jdbcType=VARCHAR},'%')
+                or depotdate like concat('%',#{date,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize > 0">
+                limit #{pageIndex},#{pageSize}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectDepotItemBySheet" resultType="com.productmanage.bean.DepotItem">
+        select
+        <include refid="Base_Column_List"/>
+        from depotitem
+        <where>
+            <if test="depotId != ''">
+                and depotid = #{depotId,jdbcType=VARCHAR}
+            </if>
+        </where>
+        order by depotid
+    </select>
+
+    <select id="findLength" resultType="java.lang.Integer">
+        select count(*)
+        from depotitem
+        <where>
+            <if test="pdId != null and pdId != ''">
+                and pdid = #{pdId,jdbcType=VARCHAR}
+            </if>
+            <if test="depotId != null and depotId != ''">
+                and depotid = #{depotId,jdbcType=VARCHAR}
+            </if>
+            <if test="date != null and date != ''">
+                and (adddate like concat('%',#{date,jdbcType=VARCHAR},'%')
+                or depotdate like concat('%',#{date,jdbcType=VARCHAR},'%'))
+            </if>
+        </where>
+    </select>
+</mapper>

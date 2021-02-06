@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.LoginDetailMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.LoginDetail">
+        <id column="detailid" property="detailId" jdbcType="VARCHAR"/>
+        <result column="uid" property="uId" jdbcType="VARCHAR"/>
+        <result column="currentlogin" property="currentLogin" jdbcType="DATE"/>
+        <result column="exitlogin" property="exitLogin" jdbcType="DATE"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        detailid, uid, currentlogin, exitlogin
+    </sql>
+
+    <insert id="insertLoginDetail" parameterType="com.productmanage.bean.LoginDetail">
+        insert into logindetail
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="detailId != null" >
+                detailid,
+            </if>
+            <if test="uId != null" >
+                uid,
+            </if>
+            <if test="currentLogin != null" >
+                currentlogin,
+            </if>
+            <if test="exitLogin != null" >
+                exitlogin,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="detailId != null" >
+                #{detailId,jdbcType=VARCHAR},
+            </if>
+            <if test="uId != null" >
+                #{uId,jdbcType=VARCHAR},
+            </if>
+            <if test="currentLogin != null" >
+                <!--#{currentLogin,jdbcType=DATE},-->
+                now(),
+            </if>
+            <if test="exitLogin != null" >
+                #{exitLogin,jdbcType=DATE},
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteLoginDetailById" parameterType="java.lang.String">
+        delete from logindetail
+        where detailid = #{detailId,jdbcType=VARCHAR} and exitlogin is not null
+    </delete>
+
+    <delete id="deleteLoginDetailByUid" parameterType="java.lang.String">
+        delete from logindetail
+        where uid = #{uId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateLoginDetail">
+        update logindetail
+        set exitlogin = now()
+        <where>
+            <if test="uId != null and uId != ''">
+                and uid = #{uId,jdbcType=VARCHAR} and exitlogin is null
+            </if>
+            <if test="detailId != null and detailId != ''">
+                and detailid = #{detailId,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </update>
+
+    <select id="selectNewDetailId" resultType="java.lang.String">
+        select concat(
+            'detail',
+            date_format(now(),'%Y%m%d%H%i%s')
+        )
+    </select>
+
+    <select id="isLogin" resultType="com.productmanage.bean.LoginDetail">
+        select
+        <include refid="Base_Column_List"/>
+        from logindetail
+        where uid = #{uId,jdbcType=VARCHAR} and exitlogin is null
+    </select>
+
+    <select id="selectLoginDetailById" resultType="com.productmanage.bean.LoginDetail">
+        select
+        <include refid="Base_Column_List"/>
+        from logindetail
+        where detailid = #{detailId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selctLoginDetailByPage" resultType="com.productmanage.bean.LoginDetail">
+        select
+        <include refid="Base_Column_List"/>
+        from logindetail
+        <where>
+            <if test="uId != null">
+                and uid like concat('%',#{uId,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="date != null and date != ''">
+                and (currentlogin like concat('%',#{date,jdbcType=VARCHAR},'%')
+                or exitlogin like concat('%',#{date,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize >= 0">
+                limit #{pageIndex, jdbcType=INTEGER},#{pageSize, jdbcType=INTEGER}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectLoginDetailBySheet" resultType="com.productmanage.bean.LoginDetail">
+        select
+        <include refid="Base_Column_List"/>
+        from logindetail order by uid
+    </select>
+
+    <select id="findLength" resultType="java.lang.Integer">
+        select count(*)
+        from logindetail
+        <where>
+            <if test="uId != null">
+                and uid like concat('%',#{uId,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="date != null and date != ''">
+                and (currentlogin like concat('%',#{date,jdbcType=VARCHAR},'%')
+                or exitlogin like concat('%',#{date,jdbcType=VARCHAR},'%'))
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,11 @@
+[
+	{ id: "notificationMsg", text: "通知信息", iconCls: "icon-collapse"},
+	{ id: "addNotificationinfo", pid: "notificationMsg", text: "发送通知", iconCls: "icon-add", url: "../pages/notificationinfo/notificationinfoAdd.html" },
+	{ id: "myNotificationinfo", pid: "notificationMsg", text: "我的通知", iconCls: "icon-tip", url: "../pages/notificationinfo/mynotificationinfoList.html" },
+
+	{ id: "depotMsg", text: "补货记录", iconCls: "icon-collapse"},
+	{ id: "listDepotinfo", pid: "depotMsg", text: "记录列表", iconCls: "icon-edit", url: "../pages/depotiteminfo/depotiteminfoList.html" },
+
+    {id: "personMsg", text: "个人信息管理/退出", iconCls: "icon-user"},
+    {id: "personMsgManage", pid: "personMsg", text: "个人信息", iconCls: "icon-edit", url: "../pages/personMsg/personMsg.html"}
+]

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>清点商品</title>
+    <head>
+        <title>清点面板</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <script src="../../scripts/boot.js" type="text/javascript"></script>
+        <script src="../../myJS/common.js" type="text/javascript"></script>
+
+        <style type="text/css">
+            html, body
+            {
+                padding:0;
+                margin:0;
+                border:0;
+                height:100%;
+                overflow:hidden;
+            }
+        </style>
+    </head>
+<body>
+<fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >清点商品</legend>
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+                <tr>
+                    <td style="width:100px;" align="right">清点编号：</td>
+                    <td style="width:150px;">
+                        <input id="turnId" name="turnId" required="true" class="mini-textbox" enabled="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">清点员编号：</td>
+                    <td style="width:150px;">
+                        <input id="uId" name="uId" required="true" class="mini-textbox" enabled="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td  align="right">商品编号：</td>
+                    <td >
+                        <input id="pdId" name="pdId" class="mini-combobox" valueField="pdId" textField="pdId"
+                               url="/product/selectPdIdPdName" required="true" emptyText="请选择商品" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">清点时间：</td>
+                    <td >
+                        <input id="saleDate" name="saleDate" class="mini-datepicker" style="width:150px;" showTodayButton="true"
+                               ondrawdate="onDrawDate2" required="true" format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">清点数量：</td>
+                    <td >
+                        <input id="saleRemain" name="saleRemain" onvaluechanged="onValueRemain" class="mini-spinner" maxValue="1000"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align:center;padding:10px;">
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>
+        </div>
+    </form>
+</fieldset>
+
+<script type="text/javascript">
+    mini.parse();
+
+    var form = new mini.Form("form1");
+    getCookie();
+    isLogin();
+    setInitTurnId();
+
+    function onDrawDate2(e) {
+        var date = e.date;
+        var d = new Date();
+        if (date.getTime() < d.getTime()) {
+            e.allowSelect = false;
+        }
+    }
+
+    // 从后台获取最新的pdId
+    function setInitTurnId(){
+        mini.get("saleDate").setValue(new Date());
+        mini.get("uId").setValue(loginUid);
+        $.ajax({
+            url: '/turnOver/selNewTurnId',
+            async:false,
+            success: function (text) {
+                var o = mini.decode(text);
+                mini.get("turnId").setValue(o.turnId);
+            }
+        });
+    }
+
+    function SaveData() {
+        var o = form.getData();
+
+        form.validate();
+        if (form.isValid() == false) return;
+
+        var json = mini.encode([o]);
+        $.ajax({
+            url: "/turnOver/insertTurnOver",
+            type: 'post',
+            data: { turnOverJSON: json },
+            cache: false,
+            success: function (text) {
+                mini.alert(text,"提示",function(){
+                    CloseWindow("save");
+                });
+                clear();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                mini.alert(jqXHR.responseText,"提示",function(){
+                    CloseWindow();
+                });
+            }
+        });
+    }
+
+    function GetData() {
+        var o = form.getData();
+        return o;
+    }
+    function CloseWindow(action) {
+        if (action == "close" && form.isChanged()) {
+            if (confirm("数据被修改了，是否先保存？")) {
+                return false;
+            }
+        }
+        if (window.CloseOwnerWindow) return window.CloseOwnerWindow(action);
+        else window.close();
+    }
+    // 点击确认后保存数据并刷新页面
+    function onOk(e) {
+        SaveData();
+    }
+    // 点击取消后刷新页面
+    function onCancel(e) {
+        clear();
+        CloseWindow("cancel");
+    }
+
+    function clear(){
+        mini.get("pdId").setValue("");
+        mini.get("saleDate").setValue("");
+        mini.get("saleRemain").setValue("0");
+        setInitTurnId();
+    }
+
+    function onValueRemain(e){
+        var saleRemain = parseInt(mini.get("saleRemain").getValue());
+        if(saleRemain % 1 != 0){
+            saleRemain = Math.floor(saleRemain);
+        }
+        mini.get("saleRemain").setValue(saleRemain+"");
+    }
+
+</script>
+</body>
+</html>

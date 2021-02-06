@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>新增商品</title>
+    <head>
+        <title>新增面板</title>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+        <script src="../../scripts/boot.js" type="text/javascript"></script>
+        <script src="../../myJS/common.js" type="text/javascript"></script>
+
+        <style type="text/css">
+            html, body
+            {
+                padding:0;
+                margin:0;
+                border:0;
+                height:100%;
+                overflow:hidden;
+            }
+        </style>
+    </head>
+<body>
+
+<fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend>批量添加商品</legend>
+    <form action="/product/insertProductBySheet" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" style="width: 180px"/>
+        <button type="submit">导入文件</button>
+    </form>
+    <br>
+    <a href="/product/getFileDemo" class="mini-button" iconCls="icon-download">商品文件模板下载</a>
+</fieldset>
+
+<fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >新增商品</legend>
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+                <tr>
+                    <td style="width:100px;" align="right">商品编号：</td>
+                    <td style="width:150px;">
+                        <input id="pdId" name="pdId" required="true" class="mini-textbox" enabled="false"/>
+                    </td>
+                    <td style="width:100px;" align="right">商品名称：</td>
+                    <td>
+                        <input id="pdName" name="pdName" class="mini-textbox" required="true" emptyText="请输入名称"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td  align="right">商品价格：</td>
+                    <td >
+                        <input id="price" required="true"  name="price" class="mini-spinner" maxValue="999"/>
+                    </td>
+                    <td style="width:100px;" align="right">生产商：</td>
+                    <td >
+                        <input id="producer" name="producer" required="true" class="mini-textbox" emptyText="请输入生产商"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">生产时间：</td>
+                    <td >
+                        <input id="produceDate" name="produceDate" class="mini-datepicker" style="width:150px;" showTodayButton="false"
+                               ondrawdate="onDrawDate" required="true" format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                    <td style="width:100px;" align="right">过期时间：</td>
+                    <td >
+                        <input id="expirationDate" name="expirationDate" class="mini-datepicker" style="width:150px;" showTodayButton="false"
+                               ondrawdate="onDrawDate2" required="true"  format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">添加时间：</td>
+                    <td >
+                        <input id="addDate" name="addDate" class="mini-datepicker" style="width:150px;" enabled="false"
+                               required="true"  format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                    <td style="width:100px;" align="right">商品数量：</td>
+                    <td >
+                        <input id="remain" name="remain" onvaluechanged="onValueRemain" class="mini-spinner" increment="10" maxValue="1000"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">备注：</td>
+                    <td colspan="3">
+                        <input id="remark" name="remark" class="mini-textarea" style="width:386px;"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align:center;padding:10px;">
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>
+        </div>
+    </form>
+</fieldset>
+
+<script type="text/javascript">
+    mini.parse();
+
+    var form = new mini.Form("form1");
+    getCookie();
+    isLogin();
+    setInitpdId();
+
+    // 设置今天之后的日期为不可选
+    function onDrawDate(e) {
+        var date = e.date;
+        var d = new Date();
+        if (date.getTime() > d.getTime()) {
+            e.allowSelect = false;
+        }
+    }
+    function onDrawDate2(e) {
+        var date = e.date;
+        var d = new Date();
+        if (date.getTime() < d.getTime()) {
+            e.allowSelect = false;
+        }
+    }
+
+    // 从后台获取最新的pdId
+    function setInitpdId(){
+        mini.get("addDate").setValue(new Date());
+        $.ajax({
+            url: '/product/selectNewPdId',
+            async:false,
+            success: function (text) {
+                var o = mini.decode(text);
+                mini.get("pdId").setValue(o.pdId);
+            }
+        });
+    }
+
+    function SaveData() {
+        var o = form.getData();
+
+        form.validate();
+        if (form.isValid() == false) return;
+
+        var json = mini.encode([o]);
+        $.ajax({
+            url: "/product/insertProduct",
+            type: 'post',
+            data: { productJSON: json },
+            cache: false,
+            success: function (text) {
+                mini.alert(text,"提示",function(){
+                    CloseWindow("save");
+                });
+                clear();
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                mini.alert(jqXHR.responseText,"提示",function(){
+                    CloseWindow();
+                });
+            }
+        });
+    }
+
+    function GetData() {
+        var o = form.getData();
+        return o;
+    }
+    function CloseWindow(action) {
+        if (action == "close" && form.isChanged()) {
+            if (confirm("数据被修改了，是否先保存？")) {
+                return false;
+            }
+        }
+        if (window.CloseOwnerWindow) return window.CloseOwnerWindow(action);
+        else window.close();
+    }
+    // 点击确认后保存数据并刷新页面
+    function onOk(e) {
+        SaveData();
+    }
+    // 点击取消后刷新页面
+    function onCancel(e) {
+        clear();
+        CloseWindow("cancel");
+    }
+
+    function clear(){
+        mini.get("pdId").setValue("");
+        mini.get("pdName").setValue("");
+        mini.get("producer").setValue("");
+        mini.get("price").setValue("0");
+        mini.get("produceDate").setValue("");
+        mini.get("expirationDate").setValue("");
+        mini.get("remain").setValue("0");
+        mini.get("remark").setValue("0");
+        setInitpdId();
+    }
+
+    function onValueRemain(e){
+        var remain = parseInt(mini.get("remain").getValue());
+        if(remain % 1 != 0){
+            remain = Math.floor(remain);
+        }
+        mini.get("remain").setValue(remain+"");
+    }
+
+</script>
+</body>
+</html>

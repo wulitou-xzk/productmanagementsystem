@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>更新补给记录</title>
+<head>
+    <title>更新面板</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../../scripts/css/unwrite.css">
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+
+    <style type="text/css">
+    html, body
+    {        
+        padding:0;
+        margin:0;
+        border:0;
+        height:100%;
+        overflow:hidden;
+    }
+    </style>
+</head>
+<body>    
+    <fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >记录更新</legend>
+    <form id="form1" method="post">
+        <input name="id" class="mini-hidden" />
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+                <tr>
+                    <td style="width:80px;" align="right">记录编号：</td>
+                    <td style="width:150px;">
+                        <input id="itemId" name="itemId" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">补给员编号：</td>
+                    <td>
+                        <input id="depotId" name="depotId" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                    <td style="width:80px;" align="right">补给员姓名：</td>
+                    <td style="width:150px;">
+                        <input id="depotName" name="depotName" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">商品编号：</td>
+                    <td style="width:150px;">
+                        <input id="pdId" name="pdId" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                    <td style="width:80px;" align="right">商品名称：</td>
+                    <td style="width:150px;">
+                        <input id="pdName" name="pdName" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">添加时间：</td>
+                    <td style="width:150px;" align="left">
+                        <input id="addDate" name="addDate" dateFormat="yyyy-MM-dd" class="mini-textbox asLabel" allowInput="false"/>
+                    </td>
+                    <td style="width:100px;" align="right">补给时间：</td>
+                    <td >
+                        <input id="depotDate" name="depotDate" class="mini-datepicker" style="width:150px;" showTodayButton="true"
+                               ondrawdate="onDrawDate" required="true" format="yyyy-MM-dd" showOkButton="true" showClearButton="false"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:100px;" align="right">补给数量：</td>
+                    <td >
+                        <input id="depotRemain" name="depotRemain" onvaluechanged="onValueRemain" class="mini-spinner" increment="10" maxValue="1000"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="text-align:center;padding:10px;">               
+            <a class="mini-button" onclick="onOk" style="width:60px;">确定</a>
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>
+        </div>
+    </form>
+    </fieldset>
+    
+    <script type="text/javascript">
+        mini.parse();
+        
+        var form = new mini.Form("form1");
+
+        getCookie();
+        isLogin();
+
+        function onDrawDate(e) {
+            var date = e.date;
+            var d = new Date();
+            if (date.getTime() > d.getTime()) {
+                e.allowSelect = false;
+            }
+        }
+        
+        //标准方法接口定义
+        function SetData(data) {
+            if (data.action == "edit") {
+                //跨页面传递的数据对象，克隆后才可以安全使用
+                data = mini.clone(data);
+                $.ajax({
+                    url: "/depotitem/selectDepotItemById?itemId=" + data.itemId,
+                    cache: false,
+                    success: function (text) {
+                        var o = mini.decode(text);
+                        form.setData(o);
+                        mini.get("addDate").setValue(dateFormat(o.addDate, 0));
+                        if(o.depotDate != null) {
+                            mini.get("depotDate").setValue(dateFormat(o.depotDate, 0));
+                        }
+                        form.setChanged(false);
+                    }
+                });
+            }
+        }
+
+        function SaveData() {
+            var o = form.getData();
+
+            form.validate();
+            if (form.isValid() == false) return;
+
+            var json = mini.encode([o]);
+            $.ajax({
+                url: "/depotitem/editDepotItem",
+                type: 'post',
+                data: { itemJSON: json },
+                cache: false,
+                success: function (text) {
+                    mini.alert(text,"提示",function(){
+                        CloseWindow("save");
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    mini.alert(jqXHR.responseText,"提示",function(){
+                        CloseWindow();
+                    });
+                }
+            });
+        }
+
+        function CloseWindow(action) {            
+            if (action == "close" && form.isChanged()) {
+                if (confirm("数据被修改了，是否先保存？")) {
+                    return false;
+                }
+            }
+            if (window.CloseOwnerWindow) return window.CloseOwnerWindow(action);
+            else window.close();            
+        }
+        function onOk(e) {
+            SaveData();
+        }
+        function onCancel(e) {
+            CloseWindow("cancel");
+        }
+        function onValueRemain(e){
+            var depotRemain = parseInt(mini.get("depotRemain").getValue());
+            if(depotRemain % 1 != 0){
+                depotRemain = Math.floor(depotRemain);
+            }
+            mini.get("depotRemain").setValue(depotRemain+"");
+        }
+
+    </script>
+</body>
+</html>

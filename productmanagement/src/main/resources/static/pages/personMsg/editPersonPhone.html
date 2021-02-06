@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>修改预留电话</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../../scripts/css/unwrite.css">
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+
+    <style type="text/css">
+        html, body
+        {
+            padding:0;
+            margin:0;
+            border:0;
+            height:100%;
+            overflow:hidden;
+        }
+    </style>
+</head>
+<body>
+<fieldset style="border:solid 1px #aaa;padding:3px;">
+    <legend >号码变更</legend>
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;">
+            <table style="table-layout:fixed;">
+                <tr>
+                    <td style="width:80px;" align="right">员工编号：</td>
+                    <td style="width:150px;">
+                        <input id="uid" name="uid" class="mini-textbox" required="true" emptyText="请输入编号" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">员工姓名：</td>
+                    <td>
+                        <input id="userName" name="userName" required="true" class="mini-textbox" emptyText="请输入姓名"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="right">旧预留电话：</td>
+                    <td >
+                        <input id="oldPhone" name="oldPhone" required="true" class="mini-textbox" emptyText="输入旧预留电话"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td  align="right">新预留电话：</td>
+                    <td >
+                        <input id="phone" name="phone" required="true" class="mini-textbox" emptyText="请输入新预留电话"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align:center;padding:10px;">
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>
+        </div>
+    </form>
+</fieldset>
+
+<script type="text/javascript">
+    mini.parse();
+
+    var form = new mini.Form("form1");
+
+    getCookie();
+    isLogin();
+
+    function SaveData() {
+        var o = form.getData();
+        // 验证表单
+        form.validate();
+        if (form.isValid() == false) {
+            return;
+        }
+        if(checkMsg(o) == false){
+            return ;
+        }
+
+        var uId = o.uid;
+        var userName = o.userName;
+        var phone = o.oldPhone + '-' +  o.phone;
+        var json = '[{"uId":"' + uId + '",' +
+            '"userName":"' + userName + '",' +
+            '"phone":"' + phone + '",' +
+            '}]';
+        $.ajax({
+            url: '/user/operationByUser',
+            type: 'post',
+            data: { userJSON: json, uId: loginUid, detailId: detailId },
+            cache: false,
+            success: function (text) {
+                mini.alert(text,"提示",function () {
+                    if(text.indexOf("失败") < 0){
+                        window.history.back();
+                    }
+                });
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                mini.alert(jqXHR.responseText,"提示",function(){
+                    CloseWindow();
+                });
+            }
+        });
+    }
+
+    function checkMsg(o) {
+        var uid = o.uid;
+        var i = 0;
+        if(uid != loginUid){
+            mini.alert("编号错误","提示");
+            i = i + 1;
+        }
+        var oldPhone=mini.get("oldPhone").getValue();
+        var phone = mini.get("phone").getValue();
+        var reg = /^1[34578]\d{9}$/;
+        if(reg.test(oldPhone) === false || reg.test(phone) === false)
+        {
+            mini.alert("联系手机输入不合法，请重新输入");
+            i = i + 1;
+        }
+        if(i != 0){
+            clear();
+            return false;
+        }
+        return true;
+    }
+
+    function GetData() {
+        var o = form.getData();
+        return o;
+    }
+    function CloseWindow(action) {
+        if (action == "close" && form.isChanged()) {
+            mini.confirm("数据被修改了，是否先保存？","提示",function(action){
+                if(action === "ok"){
+                    return false;
+                }
+            });
+        }
+        if (window.CloseOwnerWindow) {
+            return window.CloseOwnerWindow(action);
+        }
+        else {
+            window.close();
+        }
+    }
+    function onOk(e) {
+        SaveData();
+        clear();
+    }
+    function onCancel(e) {
+        clear();
+        window.history.back();
+        CloseWindow("cancel");
+    }
+
+    function clear(){
+        mini.get("oldPhone").setValue("");
+        mini.get("phone").setValue("");
+    }
+
+</script>
+</body>
+</html>

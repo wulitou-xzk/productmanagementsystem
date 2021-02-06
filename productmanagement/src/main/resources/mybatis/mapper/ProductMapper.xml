@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.ProductMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.Product">
+        <id column="pdid" property="pdId" jdbcType="VARCHAR"/>
+        <result column="pdname" property="pdName" jdbcType="VARCHAR"/>
+        <result column="price" property="price" jdbcType="DOUBLE"/>
+        <result column="producer" property="producer" jdbcType="VARCHAR"/>
+        <result column="producedate" property="produceDate" jdbcType="DATE"/>
+        <result column="expirationdate" property="expirationDate" jdbcType="DATE"/>
+        <result column="remain" property="remain" jdbcType="INTEGER"/>
+        <result column="adddate" property="addDate" jdbcType="DATE"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        pdid, pdname, price, producer, producedate, expirationdate, remain, remark, adddate
+    </sql>
+
+    <insert id="insertProduct" parameterType="com.productmanage.bean.Product">
+        insert into product
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="pdId != null" >
+                pdid,
+            </if>
+            <if test="pdName != null" >
+                pdname,
+            </if>
+            <if test="price != null" >
+                price,
+            </if>
+            <if test="producer != null" >
+                producer,
+            </if>
+            <if test="produceDate != null" >
+                producedate,
+            </if>
+            <if test="expirationDate != null" >
+                expirationdate,
+            </if>
+            <if test="remain != null" >
+                remain,
+            </if>
+            <if test="remark != null" >
+                remark,
+            </if>
+            <if test="addDate != null" >
+                adddate,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="pdId != null" >
+                #{pdId,jdbcType=VARCHAR},
+            </if>
+            <if test="pdName != null" >
+                #{pdName,jdbcType=VARCHAR},
+            </if>
+            <if test="price != null" >
+                #{price,jdbcType=VARCHAR},
+            </if>
+            <if test="producer != null" >
+                #{producer,jdbcType=VARCHAR},
+            </if>
+            <if test="produceDate != null" >
+                #{produceDate,jdbcType=DATE},
+            </if>
+            <if test="expirationDate != null" >
+                #{expirationDate,jdbcType=DATE},
+            </if>
+            <if test="remain != null" >
+                #{remain,jdbcType=INTEGER},
+            </if>
+            <if test="remark != null" >
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="addDate != null" >
+                #{addDate,jdbcType=DATE},
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteProductById" parameterType="java.lang.String">
+        delete from product
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateProduct" parameterType="com.productmanage.bean.Product">
+    update product
+        <set>
+            <if test="pdName != null" >
+                pdname = #{pdName,jdbcType=VARCHAR},
+            </if>
+            <if test="price != null" >
+                price = #{price,jdbcType=DOUBLE},
+            </if>
+            <if test="remain != null" >
+                remain = #{remain,jdbcType=INTEGER},
+            </if>
+            <if test="remark != null" >
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectNewPdId" resultType="java.lang.String">
+        select concat(
+            'pd',
+            date_format(now(),'%Y%m%d')
+        )
+    </select>
+
+    <select id="selectProductById" parameterType="java.lang.String" resultType="com.productmanage.bean.Product">
+        select
+        <include refid="Base_Column_List"/>
+        from product
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectProductByPage" resultType="com.productmanage.bean.Product">
+        select
+        <include refid="Base_Column_List"/>
+        from product
+        <where>
+            <if test="pdName != null">
+                and pdname like concat('%',#{pdName,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize >= 0">
+                limit #{pageIndex, jdbcType=INTEGER},#{pageSize, jdbcType=INTEGER}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectProductBySheet" resultType="com.productmanage.bean.Product">
+        select
+        <include refid="Base_Column_List"/>
+        from product order by pdname
+    </select>
+
+    <select id="selectProductIdName" resultType="com.productmanage.bean.Product">
+        select
+        pdid, pdname
+        from product
+    </select>
+
+    <select id="findLength" parameterType="java.lang.String" resultType="java.lang.Integer">
+        select count(*)
+        from product
+        where pdname like concat('%',#{pdName,jdbcType=VARCHAR},'%')
+    </select>
+</mapper>

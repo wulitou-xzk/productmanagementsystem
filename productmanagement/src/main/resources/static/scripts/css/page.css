@@ -1,0 +1,46 @@
+.page{
+	float: left;
+	height: 36px;
+	width: 900px;
+	border-style: ridge;
+}
+
+.page select{
+	float: left;
+	height: 20px;
+	width: 60px;
+	margin-left: 5px;
+	margin-top: 5px;
+}
+
+.page .pageIndex{
+	margin-top: 5px;
+	margin-left: 175px;
+}
+
+.page a{
+	float: left;
+	margin-left: 20px;
+	font-size: 15px;
+	font-family: "Microsoft-Yahei";
+	text-decoration: none;
+}
+
+
+.page .total{
+	float: right;
+	margin-right: 10px;
+}
+
+.pageIndex a{
+	background-color: #d7ebf9;
+	font-family: "ËÎÌו";
+	border-style: ridge;
+	color: #7679bc;
+}
+
+.pageIndex .pageNumber{
+	font-family: "ËÎÌו";
+	border-style: none;
+	background-color: #f2f5f7;
+}

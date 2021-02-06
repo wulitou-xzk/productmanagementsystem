@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.NotificationMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.Notification">
+        <id column="notifid" property="notifId" jdbcType="VARCHAR"/>
+        <result column="senduid" property="sendUid" jdbcType="VARCHAR"/>
+        <result column="acceptuid" property="acceptUid" jdbcType="VARCHAR"/>
+        <result column="pdid" property="pdId" jdbcType="VARCHAR"/>
+        <result column="operation" property="operation" jdbcType="VARCHAR"/>
+        <result column="notifidate" property="notifiDate" jdbcType="DATE"/>
+        <result column="state" property="state" jdbcType="INTEGER"/>
+        <result column="finishdate" property="finishDate" jdbcType="DATE"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        notifid, senduid, acceptuid, pdid, operation, notifidate, state, finishdate
+    </sql>
+
+    <insert id="insertNotification" parameterType="com.productmanage.bean.Notification">
+        insert into notification
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="notifId != null" >
+                notifid,
+            </if>
+            <if test="sendUid != null" >
+                senduid,
+            </if>
+            <if test="acceptUid != null" >
+                acceptuid,
+            </if>
+            <if test="pdId != null" >
+                pdid,
+            </if>
+            <if test="operation != null" >
+                operation,
+            </if>
+            <if test="notifiDate != null" >
+                notifidate,
+            </if>
+            <if test="state != null" >
+                state,
+            </if>
+            <if test="finishDate != null" >
+                finishdate,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="notifId != null" >
+                #{notifId,jdbcType=VARCHAR},
+            </if>
+            <if test="sendUid != null" >
+                #{sendUid,jdbcType=VARCHAR},
+            </if>
+            <if test="acceptUid != null" >
+                #{acceptUid,jdbcType=VARCHAR},
+            </if>
+            <if test="pdId != null" >
+                #{pdId,jdbcType=VARCHAR},
+            </if>
+            <if test="operation != null" >
+                #{operation,jdbcType=VARCHAR},
+            </if>
+            <if test="notifiDate != null" >
+                #{notifiDate,jdbcType=DATE},
+            </if>
+            <if test="state != null" >
+                #{state,jdbcType=INTEGER},
+            </if>
+            <if test="finishDate != null" >
+                #{finishDate,jdbcType=DATE},
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteNotificationById" parameterType="java.lang.String">
+        delete from notification
+        where notifid = #{notifId,jdbcType=VARCHAR} and finishdate is not null
+    </delete>
+
+    <delete id="deleteByPdId" parameterType="java.lang.String">
+        delete from notification
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteByUid" parameterType="java.lang.String">
+        delete from notification
+        where
+        acceptuid = #{uId,jdbcType=VARCHAR} or senduid = #{uId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateNotification" parameterType="com.productmanage.bean.Notification">
+        update notification
+        set operation = #{operation,jdbcType=VARCHAR}
+        where notifid = #{notifId,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateNotificationFinishDate">
+        update notification
+        set finishdate = #{finishDate,jdbcType=DATE},state = 1
+        where notifid = #{notifId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectNewNotifId" resultType="java.lang.String">
+        select concat(
+            'noti',
+            date_format(now(),'%Y%m%d%H%i%s')
+        )
+    </select>
+
+    <select id="selectNotificationById" resultType="com.productmanage.bean.Notification">
+        select
+        <include refid="Base_Column_List"/>
+        from notification
+        where notifid = #{notifId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectNotificationByPage" resultType="com.productmanage.bean.Notification">
+        select
+        <include refid="Base_Column_List"/>
+        from notification
+        <where>
+            <if test="self != null">
+                and (senduid = #{sendUid,jdbcType=VARCHAR}
+                or acceptuid = #{acceptUid,jdbcType=VARCHAR})
+            </if>
+            <if test="sendUid != '' and acceptUid != '' and self == null">
+                and senduid = #{sendUid,jdbcType=VARCHAR}
+                and acceptuid = #{acceptUid,jdbcType=VARCHAR}
+            </if>
+            <if test="sendUid != '' and acceptUid == ''">
+                and senduid = #{sendUid,jdbcType=VARCHAR}
+            </if>
+            <if test="sendUid == '' and acceptUid != ''">
+                and acceptuid = #{acceptUid,jdbcType=VARCHAR}
+            </if>
+            <if test="sendUid == '' and acceptUid == ''">
+                and acceptuid like concat('%','','%')
+            </if>
+            <if test="operation != null">
+                and operation like concat('%',#{operation,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize > 0">
+                limit #{pageIndex},#{pageSize}
+            </if>
+        </where>
+    </select>
+
+    <select id="findLength" resultType="java.lang.Integer">
+        select count(*)
+        from notification
+        <where>
+            <if test="sendUid != null and acceptUid != null">
+                and (senduid = #{sendUid,jdbcType=VARCHAR}
+                or acceptuid = #{acceptUid,jdbcType=VARCHAR})
+            </if>
+            <if test="sendUid != null and sendUid != ''">
+                and senduid = #{sendUid,jdbcType=VARCHAR}
+            </if>
+            <if test="acceptUid != null and acceptUid != ''">
+                and acceptuid = #{acceptUid,jdbcType=VARCHAR}
+            </if>
+            <if test="operation != null">
+                and operation like concat('%',#{operation,jdbcType=VARCHAR},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

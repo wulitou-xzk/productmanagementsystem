@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>员工信息</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+	<script src="../../scripts/ColumnsMenu.js" type="text/javascript"></script>
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+</head>
+<body>
+	
+    <h1>员工信息</h1>      
+	
+    <div style="width:100%;">
+        <div class="mini-toolbar" style="border-bottom:0;padding:0px;">
+            <table style="width:100%;">
+                <tr>
+                    <td style="width:100%;">
+                        <a class="mini-button" iconCls="icon-remove" onclick="remove()">删除员工</a>
+                        <a class="mini-button" iconCls="icon-add" onclick="add()">增加员工</a>
+                        <a href="/user/selectUserBySheet" class="mini-button" iconCls="icon-download">导出员工信息</a>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <input id="userName" name="userName" class="mini-textbox" emptyText="请输入员工姓名" style="width:150px;" onenter="onKeyEnter"/>
+                        <input id="userLevel" name="userLevel" class="mini-combobox" valueField="id" textField="text"
+                               url="/data/userLevel.txt" required="true" onvaluechanged="onKeyEnter" emptyText="请选择员工类别" />
+                        <a class="mini-button" iconCls="icon-search" onclick="search()">查询</a>
+                        <a class="mini-button" iconCls="icon-reload" onclick="clear()">清空</a>
+                    </td>
+                </tr>
+            </table>           
+        </div>
+    </div>
+   
+    <div id="datagrid1" class="mini-datagrid" style="width:100%;height:400px;" 
+        url="/user/selUserByPage" idField="id" showpager="true"
+        sizeList="[5,10,20,30,50]" pageSize="5" allowCellSelect="true" multiSelect="true" 
+        editNextOnEnterKey="true"  editNextRowCell="true" allowResize="true"
+    >
+        <div property="columns">
+        	<div type="indexcolumn" width="20">序号</div>
+            <div type="checkcolumn" ></div>        
+            <div field="uid" width="50">员工编号</div>
+            <div field="userName" width="50">员工姓名</div>
+            <div field="phone" width="50">员工电话</div>
+            <div field="addDate" width="60" renderer="onDateRenderer" allowSort="true" dateFormat="yyyy-MM-dd">入职日期</div>
+            <div field="userLevel" width="50" renderer="onUserLevelRenderer">员工职位</div>
+            <div field="remark" renderer="onRemarkRenderer" width="50">备注信息</div>
+            <div width="150" renderer="onActionBtn" align="center" headerAlign="center" class="action-link">操作</div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        getCookie();
+        mini.parse();
+
+        var grid = mini.get("datagrid1");
+        getCookie();
+        isLogin();
+        // 从文件中获取员工类别
+        getTypeObject();
+        // 加载页面
+        grid.load();
+        
+        var menu = new ColumnsMenu(grid);
+        
+        // 添加操作按钮
+        function onActionBtn(e){
+            var s = ' <a id="edit" class="mini-button mini-state-default mini-corner-all" onclick="detail(1)">编辑</a>'
+                + '  <a id="del" class="mini-button mini-state-default mini-corner-all" onclick="remove()">删除</a>'
+                + '  <a id="detail" class="mini-button mini-state-default mini-corner-all" onclick="detail(0)">详情</a>';
+            return s;
+        }
+
+        // 弹出员工添加子窗口
+        function add() {
+            mini.open({
+                targetWindow: window,
+                url: "userinfoAdd.html",
+                title: "新增员工", width: 600, height: 350,
+                iconCls: "icon-add",
+                onload: function () {
+                    var iframe = this.getIFrameEl();
+                    var data = { action: "new" };
+                },
+                ondestroy: function (action) {
+                    grid.reload();
+                }
+            });
+        }
+
+        // 弹出员工编辑、详情子窗口
+        function detail(type) {
+            var row = grid.getSelected();
+            if (row) {
+                var url = '';
+                var title = '';
+                var action = '';
+                if(type === 1){
+                    url = 'userinfo/userinfoEdit.html';
+                    title = '编辑员工';
+                    action = 'edit';
+                }
+                if(type === 0){
+                    url = 'userinfo/userinfoDetail.html';
+                    title = '员工详情';
+                    action = 'detail';
+                }
+                mini.open({
+                    url: url,
+                    title: title, width: 600, height: 300,
+                    iconCls: "icon-edit",
+                    onload: function () {
+                        var iframe = this.getIFrameEl();
+                        var data = { action: action, uId: row.uid };
+                        iframe.contentWindow.SetData(data);
+                    },
+                    ondestroy: function (action) {
+                        grid.reload();
+                    }
+                });
+                
+            } else {
+                mini.alert("请选中一条记录");
+            }
+        }
+        
+        ////////////////////////////////
+        // 删除一种员工
+        function remove() {
+            var rows = grid.getSelecteds();
+            if (rows.length > 0) {
+                mini.confirm("确认删除选中的记录？","删除员工",function(action) {
+                	if(action === "ok"){
+	                    var ids = [];
+	                    for (var i = 0, l = rows.length; i < l; i++) {
+	                        var r = rows[i];
+	                        ids.push(r.uid);
+	                    }
+	                    var id = ids.join(',');
+	                    grid.loading("操作中，请稍后......");
+	                    $.ajax({
+	                        url: "/user/delUser?id=" +id + '&uId=' + loginUid,
+	                        success: function (text) {
+	                        	mini.alert(text,"提示");
+		                            grid.reload();
+	                        },
+	                        error: function (jqXHR, textStatus, errorThrown) {
+	                        	mini.alert(jqXHR.responseText,"提示");
+	                        }
+	                    });
+                	}
+                });
+            } else {
+            	mini.alert("请选中一条记录");
+            }
+        }
+        
+        // 根据查询条件查询员工
+        function search() {
+            var userName = mini.get("userName").getValue();
+            var userLevel = mini.get("userLevel").getValue();
+            grid.load({
+                userName:userName,
+                userLevel:userLevel
+            });
+        }
+        function onKeyEnter(e) {
+            search();
+        }
+        // 清空查询条件并刷新页面
+        function clear(){
+        	mini.get("userName").setValue("");
+            mini.get("userLevel").setValue("");
+	        search();
+        }
+        
+        /////////////////////////////////////////////////
+        var type;
+        function getTypeObject(){
+        	$.ajax({
+        		url: '/data/userLevel.txt',
+        		success: function(data){
+        			type = mini.decode(data);
+        		},
+        		error: function(data){
+        			// console.log(data);
+        		}
+        	});
+        }
+
+        function onDateRenderer(e) {
+            var date = e.value;
+            if(date != null){
+                return dateFormat(date, 0);
+            }
+            return "";
+        }
+
+        function onRemarkRenderer(e) {
+            if(e.value == null){
+                return "无";
+            }
+            return e.value;
+        }
+
+        function onUserLevelRenderer(e) {
+            for(var x in type){
+            	if(e.value == type[x].id){
+            		return type[x].text;
+            	}
+            }
+            return "";
+        }
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.TurnOverMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.TurnOver" >
+        <id column="turnid" property="turnId" jdbcType="VARCHAR" />
+        <result column="uid" property="uId" jdbcType="VARCHAR" />
+        <result column="pdid" property="pdId" jdbcType="VARCHAR" />
+        <result column="saledate" property="saleDate" jdbcType="DATE" />
+        <result column="saleremain" property="saleRemain" jdbcType="INTEGER" />
+        <result column="salemoney" property="saleMoney" jdbcType="DOUBLE" />
+    </resultMap>
+    <sql id="Base_Column_List" >
+        turnid, uid, pdid, saledate, saleremain, salemoney
+    </sql>
+    <insert id="insertTurnOver" parameterType="com.productmanage.bean.TurnOver">
+        insert into turnover
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="turnId != null" >
+                turnid,
+            </if>
+            <if test="uId != null" >
+                uid,
+            </if>
+            <if test="pdId != null" >
+                pdid,
+            </if>
+            <if test="saleDate != null" >
+                saledate,
+            </if>
+            <if test="saleRemain != null" >
+                saleremain,
+            </if>
+            <if test="saleMoney != null" >
+                salemoney,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="turnId != null" >
+                #{turnId,jdbcType=VARCHAR},
+            </if>
+            <if test="uId != null" >
+                #{uId,jdbcType=VARCHAR},
+            </if>
+            <if test="pdId != null" >
+                #{pdId,jdbcType=VARCHAR},
+            </if>
+            <if test="saleDate != null" >
+                #{saleDate,jdbcType=DATE},
+            </if>
+            <if test="saleRemain != null" >
+                #{saleRemain,jdbcType=INTEGER},
+            </if>
+            <if test="saleMoney != null" >
+                #{saleMoney,jdbcType=DOUBLE},
+            </if>
+        </trim>
+    </insert>
+
+    <delete id="deleteTurnOverById" parameterType="java.lang.String">
+        delete from turnover
+        where turnid = #{turnId,jdbcType=VARCHAR}
+    </delete>
+
+    <delete id="deleteTurnOverByPdId" parameterType="java.lang.String">
+        delete from turnover
+        where pdid = #{pdId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateUidByDelUser" parameterType="java.lang.String">
+        update turnover
+        set uid='员工已离职'
+        where uid=#{uId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectNewTurnID" resultType="java.lang.String">
+        select concat(
+            'turn',
+            date_format(now(),'%Y%m%d%H%i%s')
+        )
+    </select>
+
+    <select id="selectTurnOverById" resultType="com.productmanage.bean.TurnOver">
+        select
+        <include refid="Base_Column_List" />
+        from turnover
+        where turnid = #{turnId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectTurnOverByPage" resultType="com.productmanage.bean.TurnOver">
+        select
+        <include refid="Base_Column_List" />
+        from turnover
+        <where>
+            <if test="pdId != null and pdId != ''">
+                and pdid = #{pdId,jdbcType=VARCHAR}
+            </if>
+            <if test="uId != null and uId != ''">
+                and uid = #{uId,jdbcType=VARCHAR}
+            </if>
+            <if test="saleDate != null">
+                and saledate like concat('%',#{saleDate,jdbcType=VARCHAR},'%')
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize > 0">
+                limit #{pageIndex},#{pageSize}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectTurnOverBySheet" resultType="com.productmanage.bean.TurnOver">
+        select
+        <include refid="Base_Column_List" />
+        from turnover order by uid
+    </select>
+
+    <select id="selectSaleMoney" resultType="java.lang.Double">
+        select ifnull(sum(salemoney),0)
+        from turnover
+        <where>
+            <if test="pdId != null and pdId != ''">
+                and pdid = #{pdId,jdbcType=VARCHAR}
+            </if>
+            <if test="uId != null and uId != ''">
+                and uid = #{uId,jdbcType=VARCHAR}
+            </if>
+            <if test="saleDate != null">
+                and saledate like concat('%',#{saleDate,jdbcType=VARCHAR},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="findLength" resultType="java.lang.Integer">
+        select count(*)
+        from turnover
+        <where>
+            <if test="pdId != null and pdId != ''">
+                and pdid = #{pdId,jdbcType=VARCHAR}
+            </if>
+            <if test="uId != null and uId != ''">
+                and uid = #{uId,jdbcType=VARCHAR}
+            </if>
+            <if test="saleDate != null">
+                and saledate like concat('%',#{saleDate,jdbcType=VARCHAR},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

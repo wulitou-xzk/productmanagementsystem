@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>找回密码</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../../scripts/css/unwrite.css">
+    <script src="../../scripts/boot.js" type="text/javascript"></script>
+    <script src="../../myJS/common.js" type="text/javascript"></script>
+
+    <style type="text/css">
+        html, body
+        {
+            padding:0;
+            margin:0;
+            border:0;
+            height:100%;
+            overflow:hidden;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" method="post">
+        <div style="padding-left:11px;padding-bottom:5px;margin-top: 60px">
+            <table style="table-layout:fixed;margin: 0 auto">
+                <tr>
+                    <td style="width:80px;" align="right">员工编号：</td>
+                    <td style="width:150px;">
+                        <input id="uid" name="uid" class="mini-textbox" required="true" emptyText="请输入编号" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">员工姓名：</td>
+                    <td>
+                        <input id="userName" name="userName" required="true" class="mini-textbox" emptyText="请输入姓名"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">职位：</td>
+                    <td style="width:150px;">
+                        <input id="userLevel" name="userLevel" class="mini-combobox" valueField="id" textField="text"
+                               url="/data/userLevel.txt" required="true" emptyText="请选择你的职位" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:80px;" align="right">预留电话：</td>
+                    <td>
+                        <input id="phone" name="phone" required="true" class="mini-textbox" emptyText="请输入预留号码"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="text-align:center;padding:10px;">
+            <a class="mini-button" onclick="onOk" style="width:60px;margin-right:20px;">确定</a>
+            <a class="mini-button" onclick="onCancel" style="width:60px;">取消</a>
+        </div>
+    </form>
+
+<script type="text/javascript">
+    mini.parse();
+
+    var form = new mini.Form("form1");
+
+    // getCookie();
+    // isLogin();
+
+    function SaveData() {
+        var o = form.getData();
+        // 验证表单
+        form.validate();
+        if (form.isValid() == false) {
+            return;
+        }
+        if(checkMsg(o) == false){
+            return ;
+        }
+
+        var uId = o.uid;
+        var userName = o.userName;
+        var userLevel = o.userLevel;
+        var phone = o.phone;
+        var json = '[{"uId":"' + uId + '",' +
+            '"userName":"' + userName + '",' +
+            '"userLevel":"' + userLevel + '",' +
+            '"phone":"' + phone + '",' +
+            '}]';
+        $.ajax({
+            url: '/user/operationByUser',
+            type: 'post',
+            data: { userJSON: json},
+            cache: false,
+            success: function (text) {
+                mini.alert(text,"提示",function(){
+                    if(text.indexOf('有误') < 0) {
+                        window.open('/', '_top');
+                    }
+                });
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                mini.alert(jqXHR.responseText,"提示",function(){
+                    CloseWindow();
+                });
+            }
+        });
+    }
+
+    function checkMsg(o) {
+        var w_sj=mini.get("phone").getValue();
+        var reg = /^1[34578]\d{9}$/;
+        if(reg.test(w_sj) === false)
+        {
+            mini.alert("联系手机输入不合法，请重新输入");
+            return false;
+        }
+        return true;
+    }
+
+    function GetData() {
+        var o = form.getData();
+        return o;
+    }
+    function CloseWindow(action) {
+        if (action == "close" && form.isChanged()) {
+            mini.confirm("数据被修改了，是否先保存？","提示",function(action){
+                if(action === "ok"){
+                    return false;
+                }
+            });
+        }
+        if (window.CloseOwnerWindow) {
+            return window.CloseOwnerWindow(action);
+        }
+        else {
+            window.close();
+        }
+    }
+    function onOk(e) {
+        SaveData();
+    }
+    function onCancel(e) {
+        window.history.back();
+        CloseWindow("cancel");
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.productmanage.mapper.UserMapper">
+    <cache/>
+    <resultMap id="BaseResultMap" type="com.productmanage.bean.User" >
+        <id column="uid" property="uId" jdbcType="VARCHAR" />
+        <result column="username" property="userName" jdbcType="VARCHAR" />
+        <result column="password" property="password" jdbcType="VARCHAR" />
+        <result column="userlevel" property="userLevel" jdbcType="INTEGER" />
+        <result column="adddate" property="addDate" jdbcType="DATE"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List" >
+        uid, username, password, userlevel, remark, adddate, phone
+    </sql>
+    <insert id="insertUser" parameterType="com.productmanage.bean.User">
+    insert into user
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="uId != null" >
+                uid,
+            </if>
+            <if test="userName != null" >
+                username,
+            </if>
+            <if test="password != null" >
+                password,
+            </if>
+            <if test="userLevel != null" >
+                userlevel,
+            </if>
+            <if test="remark != null" >
+                remark,
+            </if>
+            <if test="addDate != null" >
+                adddate,
+            </if>
+            <if test="phone != null">
+                phone,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="uId != null" >
+                #{uId,jdbcType=VARCHAR},
+            </if>
+            <if test="userName != null" >
+                #{userName,jdbcType=VARCHAR},
+            </if>
+            <if test="password != null" >
+                #{password,jdbcType=VARCHAR},
+            </if>
+            <if test="userLevel != null" >
+                #{userLevel,jdbcType=INTEGER},
+            </if>
+            <if test="remark != null" >
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="addDate != null" >
+                #{addDate,jdbcType=DATE},
+            </if>
+            <if test="phone != null" >
+                #{phone,jdbcType=DATE},
+            </if>
+        </trim>
+  </insert>
+
+    <delete id="deleteUserById" parameterType="java.lang.String">
+        delete from user
+        where uid = #{ud,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="updateUserByAdmin">
+        update user
+        <set>
+            <if test="userName != null" >
+                username = #{userName,jdbcType=VARCHAR},
+            </if>
+            <if test="remark != null" >
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where uid = #{uId,jdbcType=VARCHAR}
+    </update>
+
+    <update id="editPwdByUser">
+        update user
+        <set>
+            <if test="newPwd != null">
+                password = #{newPwd,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where uid = #{uId,jdbcType=VARCHAR} and
+        username = #{userName,jdbcType=VARCHAR} and
+        phone = #{phone,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateUserPhoneByUser">
+        update user
+        <set>
+            <if test="phone != null">
+                phone = #{phone,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where uid = #{uId,jdbcType=VARCHAR} and
+        username = #{userName,jdbcType=VARCHAR} and
+        phone = #{oldPhone,jdbcType=VARCHAR}
+    </update>
+
+    <select id="selectNewUid" resultType="java.lang.String">
+        select concat(
+            #{userType,jdbcType=VARCHAR},
+            date_format(now(),'%Y%m%d%H%i%s')
+        )
+    </select>
+
+    <select id="selectUserById" parameterType="java.lang.String" resultType="com.productmanage.bean.User">
+        select
+        <include refid="Base_Column_List" />
+        from user
+        where uid = #{uId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findPwd" parameterType="com.productmanage.bean.User" resultType="java.lang.String">
+        select
+        password
+        from user
+        <where>
+            <if test="uId != null and uId != ''">
+                and uid = #{uId,jdbcType=VARCHAR}
+            </if>
+            <if test="userName != null and userName != ''">
+                and username = #{userName,jdbcType=VARCHAR}
+            </if>
+            <if test="userLevel != null and userLevel != ''">
+                and userlevel = #{userLevel,jdbcType=VARCHAR}
+            </if>
+            <if test="phone != null and phone != ''">
+                and phone = #{phone,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUserIdName" resultType="com.productmanage.bean.User">
+        select uid, username
+        from user
+        <where>
+            <if test="type != null and type != ''">
+                and (uid like concat('inventory','%')
+                or uid like concat('admin','%')
+                )
+            </if>
+        </where>
+    </select>
+
+    <select id="selectUserBySheet" resultType="com.productmanage.bean.User">
+        select
+        <include refid="Base_Column_List" />
+        from user order by uid
+    </select>
+
+    <select id="selectUserByPage" resultType="com.productmanage.bean.User">
+        select
+        <include refid="Base_Column_List" />
+        from user
+        <where>
+            <if test="userName != null">
+                and username like concat('%',#{userName, jdbcType=VARCHAR},'%')
+            </if>
+            <if test="userLevel != null and userLevel >= 0">
+                and userlevel = #{userLevel, jdbcType=INTEGER}
+            </if>
+            <if test="sortField != null and sortField != ''">
+                order by ${sortField}
+            </if>
+            <if test="sortOrder != null and sortOrder != ''">
+                ${sortOrder}
+            </if>
+            <if test="pageIndex >= 0 and pageSize > 0">
+                limit #{pageIndex, jdbcType=INTEGER},#{pageSize, jdbcType=INTEGER}
+            </if>
+        </where>
+    </select>
+
+    <select id="findLength" resultType="java.lang.Integer">
+        select count(*)
+        from user
+        <where>
+            <if test="userName != null">
+                and username like concat('%',#{userName, jdbcType=VARCHAR},'%')
+            </if>
+            <if test="userLevel != null and userLevel >= 0">
+                and userlevel = #{userLevel, jdbcType=INTEGER}
+            </if>
+        </where>
+    </select>
+</mapper>
