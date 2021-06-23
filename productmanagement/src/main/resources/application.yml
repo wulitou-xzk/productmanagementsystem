@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/productmanagement?useSSL=false&characterEncoding=utf-8&serverTimezone=UTC
     username: root
-    password: Gepoint
+    password: root
     driver-class-name: com.mysql.jdbc.Driver
   mvc:
     date-format: yyyy-MM-dd
